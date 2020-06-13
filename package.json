@@ -1,0 +1,22 @@
+{
+  "name": "api_rest",
+  "version": "1.0.0",
+  "description": "Estudo de api com express e mysql",
+  "main": "server.js",
+  "scripts": {
+    "jocimar": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jocimar Braga",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "consign": "^0.1.6",
+    "express": "^4.17.1",
+    "moment": "^2.26.0",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
