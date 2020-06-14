@@ -1,5 +1,7 @@
-const conexao = require("../../infra/conexao");
+const conexao = require("../../infra/database/conexao");
+const axios = require('axios');
 const moment = require('moment');
+const apiCpf= "http://localhost:8082";
 
 class Atendimentos{
     add(atendimento, resp){
@@ -50,24 +52,25 @@ class Atendimentos{
             if(erro){
                 resp.status(400).json(erro);
             }else{
+
                 resp.status(200).json(resultados);
             }
-
-
-        })
+        });
     }
 
     buscaPorId(id, resp){
         const sql = `SELECT * FROM atendimentos WHERE id = ${id}`;
 
-        conexao.query(sql, (erro, resultados)=>{
+        conexao.query(sql, async(erro, resultados)=>{
+            const atendimento = resultados[0]
+            const cpf = atendimento.cliente;
             if(erro){
                 resp.status(400).json(erro);
             }else{
-                resp.status(200).json(resultados[0]);
+                const {data} = await axios.get(`${apiCpf}/${cpf}`);
+                atendimento.cliente = data
+                resp.status(200).json(atendimento);
             }
-
-
         })
     }
 
