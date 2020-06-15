@@ -1,105 +1,75 @@
-const conexao = require("../../infra/database/conexao");
-const axios = require('axios');
 const moment = require('moment');
-const apiCpf= "http://localhost:8082";
+
+const conexao = require("../../infra/database/conexao");
+const respositorio = require('../../repositorios/atendimento-repositorio');
 
 class Atendimentos{
-    add(atendimento, resp){
-        const data = moment(atendimento.data, 'DD/MM/YYYY').format('YYYY-MM-DD HH:MM:SS');
-        const dataCriacao = moment().format('YYYY-MM-DD HH:MM:SS');
-        const dataEhValida = moment(data).isSameOrAfter(dataCriacao);
-        const nomeEhValido = atendimento.cliente.length > 4;
 
-        const erros = [
+    constructor(){
+        this.erros = [
             {
                 nomeCampo: "Data",
-                valido: dataEhValida,
+                valido: false,
                 mensagem: "A data de entrega deve ser depois da data de criação"
             },
             {
                 nomeCampo: "Nome",
-                valido: nomeEhValido,
+                valido: false,
                 mensagem: "O nome deve ter no mínimo 5 letras"
             }
         ]
+    }
 
-        const existeErros = erros.filter(erro => !erro.valido);
-
+    add(atendimento){
+        const data = moment(atendimento.data, 'DD/MM/YYYY').format('YYYY-MM-DD HH:MM:SS');
+        const dataCriacao = moment().format('YYYY-MM-DD HH:MM:SS');
+        this.erros[0].valido = moment(data).isSameOrAfter(dataCriacao);
+        this.erros[1].valido = atendimento.cliente.length > 4;
+        const existeErros = this.erros.filter(erro => !erro.valido);
         if(existeErros.length){
             console.log(data);
             console.log(dataCriacao);
-            resp.status(400).send(existeErros);
+            return new Promise((resolve, reject) => reject(existeErros));
         }else{
             const atendimentoDatado = {...atendimento, data, dataCriacao}
-            const sql = "INSERT INTO Atendimentos SET ?";
-    
-            conexao.query(sql, atendimentoDatado, (error, resultado) =>{
-                if(error){
-                    console.log('Erro ao adicionar dados na tabela atendimentos');
-                    resp.status(400).send(error);
-                }else{
-                    console.log("Atendimento adicionado com sucesso no banco de dados");
-                    resp.status(201).send(resultado);
-                }
-            })
+            return respositorio.adiciona(atendimentoDatado)
         }
     }
 
-    lista(resp){
-        const sql = `SELECT * FROM atendimentos`;
-
-        conexao.query(sql, (erro, resultados)=>{
-            if(erro){
-                resp.status(400).json(erro);
-            }else{
-
-                resp.status(200).json(resultados);
-            }
-        });
-    }
-
-    buscaPorId(id, resp){
-        const sql = `SELECT * FROM atendimentos WHERE id = ${id}`;
-
-        conexao.query(sql, async(erro, resultados)=>{
-            const atendimento = resultados[0]
-            const cpf = atendimento.cliente;
-            if(erro){
-                resp.status(400).json(erro);
-            }else{
-                const {data} = await axios.get(`${apiCpf}/${cpf}`);
-                atendimento.cliente = data
-                resp.status(200).json(atendimento);
-            }
+    lista(){
+        return new Promise((resolve, reject)=>{
+            respositorio.lista()
+                .then(resultados=>{
+                    resolve(resultados);
+                }).catch(error=> reject(error));
         })
     }
 
-    altera(id, valores, resp){
-        console.log(valores.data)
-        if(valores.data){
-             valores.data = moment(valores.data, 'DD/MM/YYYY').format('YYYY-MM-DD HH:MM:SS');
-
-        }
-        const sql = `UPDATE Atendimentos SET ? WHERE id = ${id}`;
-
-        conexao.query(sql, valores, (erro, resposta)=>{
-            if(erro){
-                resp.status(400).json(erro);
-            }else{
-                resp.status(200).json(resposta);
-            }
+    buscaPorId(id){
+        return new Promise((resolve, reject)=>{
+            respositorio.buscarPorId(id)
+            .then(resultado =>{
+                    console.log(resultado);
+                    resolve(resultado);
+                }).catch(error => reject(error));
         })
     }
 
-    deletar(id, resp){
-        const sql = `DELETE FROM Atendimentos WHERE id = ${id}`;
-        
-        conexao.query(sql, (erro, resposta)=>{
-            if(erro){
-                resp.status(400).json(erro);
-            }else{
-                resp.status(200).json(resposta);
-            }
+    altera(id, valores){
+        return new Promise((resolve, reject)=>{
+            respositorio.alterar(id, valores)
+                .then(resultados =>{
+                    resolve(resultados);
+                })
+                .catch(error => reject(error));
+        })
+    }
+
+    deletar(id){
+        return new Promise((resolve, reject)=>{
+            respositorio.deletar(id)
+                .then(mensagem => resolve(mensagem))
+                .catch(error => reject(error));
         })
     }
 }

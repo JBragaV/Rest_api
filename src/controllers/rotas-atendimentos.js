@@ -6,27 +6,39 @@ module.exports = app=>{
         resp.redirect("/atendimentos")
     });
 
-    app.get('/atendimentos', (req, resp)=>{
-        atendimentos.lista(resp);
-    });
+    app.route('/atendimentos')
+        .get((req, resp)=>{
+            atendimentos.lista().then(resultados=>{
+                resp.json(resultados);
+            }).catch(error=> resp.status(400).json(error));
+        })
+        .post((req, resp)=>{
+            const atendimento = req.body;
+            atendimentos.add(atendimento)
+                .then(resultado =>{
+                    resp.json(resultado);
+                }).catch(error => resp.status(400).json(error))
+        });
 
-    app.get('/atendimentos/:id', (req, resp)=>{
-        const id = parseInt(req.params.id);
-        atendimentos.buscaPorId(id, resp);
-    });
-
-    app.post('/atendimentos', (req, resp)=>{
-        const atendimento = req.body;
-        atendimentos.add(atendimento, resp);
-    });
-
-    app.patch('/atendimentos/:id', (req, resp)=>{
-        const id = parseInt(req.params.id);
-        atendimentos.altera(id, req.body, resp);
-    });
-
-    app.delete('/atendimentos/:id', (req, resp)=>{
-        const id = parseInt(req.params.id);
-        atendimentos.deletar(id, resp);
-    });
+    app.route('/atendimentos/:id')
+        .get((req, resp)=>{
+            const id = parseInt(req.params.id);
+            atendimentos.buscaPorId(id)
+                .then(resultado => resp.json(resultado))
+                .catch(error => resp.status(400).json(error));
+        })
+        .patch((req, resp)=>{
+            const id = parseInt(req.params.id);
+            console.log(id);
+            console.log(req.body);
+            atendimentos.altera(id, req.body)
+                .then(resultados => resp.json(resultados))
+                .catch(error => resp.status(400).json(error));
+        })
+        .delete((req, resp)=>{
+            const id = parseInt(req.params.id);
+            atendimentos.deletar(id)
+                .then(mensagem => resp.json(mensagem))
+                .catch(error => resp.status(400).json(error));
+        });
 }

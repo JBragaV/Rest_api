@@ -2,7 +2,7 @@ const conexao = require('./conexao');
 
 const queries = (sql, parametros="")=>{
     return new Promise((resolve, reject)=>{
-        conexao.query(sql, parametros, (error, resultados, campos)=>{
+        conexao.query(sql, parametros, (error, resultados)=>{
             if(error){
                 reject(error);
             }else{
